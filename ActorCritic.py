@@ -28,8 +28,8 @@ class ActorCritic(nn.Module):
         self.gamma = gamma
 
         # Neural network architecture
-        self.fc1 = nn.Linear(3, 128)
-        self.fc_pi = nn.Linear(128, 3)#actor
+        self.fc1 = nn.Linear(7, 128)
+        self.fc_pi = nn.Linear(128, 7)#actor
         self.fc_v = nn.Linear(128, 1)#critic
 
         # Optimizer
@@ -248,7 +248,9 @@ class run_ac:
                 accu.append(test_accuracy)
                 env.reset(True, False)
                 # print("User :{}, Threshold : {:.1f}, Accuracy: {}".format(user_name, thres, test_accuracy))
+
             # print(user[0], accu)
+            print(user[0], ", ".join(f"{x:.2f}" for x in accu))
             final_accu = np.add(final_accu, accu)
         final_accu /= len(user_list)
         # print("Actor-Critic: ")

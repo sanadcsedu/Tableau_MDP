@@ -9,11 +9,13 @@ import pandas as pd
 from read_data import read_data
 import numpy as np
 from Categorizing_v3 import utilities
+from Categorizing_v4 import Categorizing
 
 class environment5:
     def __init__(self):
         path = os.getcwd()
         self.datasets = ['birdstrikes1', 'weather1', 'faa1']
+        # self.datasets = ['weather1']
         self.tasks = ['t1', 't2', 't3', 't4']
         self.obj = read_data()
         self.obj.create_connection(r"Tableau.db")
@@ -43,19 +45,35 @@ class environment5:
         return s
 
 
-    def get_state(self, high_level_state, algo):
-        if algo == 'Qlearn' or algo == 'SARSA':
-            state = high_level_state 
-        else: 
-            # high_level_states = ['Hypothesis_Generation', 'Sensemaking']
-            high_level_states = ['Sensemaking', 'Foraging', 'Navigation']
-            state = np.zeros(len(high_level_states), dtype = np.int)
-            idx = 0
-            for idx, s in enumerate(high_level_states):
-                if s == high_level_state:
-                    state[idx] = 1
-                    break
-            return state
+    def get_state(self, cat, attributes, high_level_state, algo, dataset):
+        # high_level_states = {'Hypothesis_Generation':0, 'Sensemaking':1}
+        # high_level_states = {'Sensemaking':0, 'Foraging':1, 'Navigation':2}
+        # state_len = len(high_level_states) + len(cat.states)
+        state_len = len(cat.states)
+        state = np.zeros(state_len, dtype = np.int)
+        # state[high_level_states[high_level_state]] = 1
+        # if high_level_state == 'Sensemaking':
+        #     state[1] = 1
+        # else: #Foraging and Navigation falls into Hypothesis Generation
+        #     state[0] = 1
+        
+        high_level_attrs = cat.get_category(attributes, dataset)        
+        for attrs in high_level_attrs:
+            # print(attrs)
+            if attrs != None:
+                # state[cat.states[attrs] + len(high_level_states)] = 1
+                state[cat.states[attrs]] = 1
+                
+        if algo == 'SARSA' or algo == 'Qlearn':
+            state_str = ''.join(map(str, state))
+            # print (state_str)
+        #     state_str = high_level_state
+        #     for attr in high_level_attrs:
+        #         if attrs != None:
+        #             state_str += "+" + str(attr)
+            return state_str
+
+        return state
 
     def process_data(self, dataset, user, thres, algo):
 
@@ -63,14 +81,18 @@ class environment5:
         data = self.obj.merge2(dataset, user)
         #use the following to generate state, action, reward sequence from raw data
         u = utilities()
-        raw_states, raw_actions, self.mem_reward = u.generate(data, dataset)
-        for s in raw_states:
-            self.mem_states.append(self.get_state(s, algo))
+        cat = Categorizing(dataset)
+        raw_interactions, raw_states, raw_actions, self.mem_reward = u.generate(data, dataset)
+        for i, s in zip(raw_interactions, raw_states):
+            self.mem_states.append(self.get_state(cat, i, s, algo, dataset))
         for a in raw_actions:
             self.mem_action.append(self.action_space[a])
         itrs = len(self.mem_states)        
         self.threshold = int(itrs * thres)   
-        # print(dataset, user, thres, len(self.mem_states), len(self.mem_action), len(self.mem_reward))     
+        # print(dataset, user, thres, len(raw_interactions), len(self.mem_states), len(self.mem_action), len(self.mem_reward))     
+        
+        # for idx in range(len(raw_interactions) - 1):
+        #     print(idx, "->", raw_interactions[idx], self.mem_states[idx], raw_actions[idx])
         # return data
 
     def cur_inter(self, steps):

@@ -21,8 +21,8 @@ class Policy(nn.Module):
         super(Policy, self).__init__()
         self.data = []
 
-        self.fc1 = nn.Linear(3, 128)
-        self.fc2 = nn.Linear(128, 3)
+        self.fc1 = nn.Linear(4, 64)
+        self.fc2 = nn.Linear(64, 4)
         self.gamma=gamma
         self.temperature = tau
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
@@ -162,6 +162,8 @@ class run_reinforce:
                 accu.append(test_accuracy)
                 env.reset(True, False) 
             # print(user[0], accu)
+            print(user[0], ", ".join(f"{x:.2f}" for x in accu))
+
             final_accu = np.add(final_accu, accu)
         final_accu /= len(user_list)
         # print("Reinforce: ")

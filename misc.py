@@ -45,7 +45,7 @@ class misc:
             None
             """
         best_discount = best_alpha = best_eps = -1
-        pp = 1
+        pp = 5
         final_accu = np.zeros(9, dtype=float)
         for user in users_hyper:
             accu = []
@@ -78,6 +78,7 @@ class misc:
                 accu.append(test_accuracy)
                 env.reset(True, False)
             # print(user[0], accu)
+            print(user[0], ", ".join(f"{x:.2f}" for x in accu))
             final_accu = np.add(final_accu, accu)
         final_accu /= len(users_hyper)
         # print(algorithm)
