@@ -30,7 +30,6 @@ class misc:
         self.epsilon_h = hyperparams['epsilon']
         self.threshold_h = hyperparams['threshold']
 
-
     def hyper_param(self, users_hyper, dataset, algorithm, epoch, result_queue):
         """
             Performs hyperparameter optimization.
@@ -45,7 +44,7 @@ class misc:
             None
             """
         best_discount = best_alpha = best_eps = -1
-        pp = 5
+        # pp = 5
         final_accu = np.zeros(9, dtype=float)
         for user in users_hyper:
             accu = []
@@ -56,29 +55,40 @@ class misc:
                 for eps in self.epsilon_h:
                     for alp in self.alpha_h:
                         for dis in self.discount_h:
-                            for _ in range(pp):
-                                if algorithm == 'Qlearn':
-                                    obj = Qlearning.Qlearning()
-                                    Q, train_accuracy = obj.q_learning(env, epoch, dis, alp, eps)
-                                    # print(train_accuracy)
-                                else:
-                                    obj = SARSA.TD_SARSA()
-                                    Q, train_accuracy = obj.sarsa(env, epoch, dis, alp, eps)
-                                    # print(train_accuracy)
-                                if max_accu_thres < train_accuracy:
-                                    max_accu_thres = train_accuracy
-                                    best_eps = eps
-                                    best_alpha = alp
-                                    best_discount = dis
-                                    best_q=Q
-                                    best_obj=obj
-                                max_accu_thres = max(max_accu_thres, train_accuracy)
+                            # env = environment5.environment5()
+                            # env.process_data(dataset, user[0], thres, algorithm) 
+                            # for _ in range(pp):
+                            if algorithm == 'Qlearn':
+                                obj = Qlearning.Qlearning()
+                                Q, train_accuracy = obj.q_learning(env, epoch, dis, alp, eps)
+                                # print(train_accuracy)
+                            else:
+                                obj = SARSA.TD_SARSA()
+                                Q, train_accuracy = obj.sarsa(env, epoch, dis, alp, eps)
+                                # print(train_accuracy)
+                            if max_accu_thres < train_accuracy:
+                                max_accu_thres = train_accuracy
+                                best_eps = eps
+                                best_alpha = alp
+                                best_discount = dis
+                                best_q=Q
+                                best_obj=obj
+                            max_accu_thres = max(max_accu_thres, train_accuracy)
                 # print("Top Training Accuracy: {}, Threshold: {}".format(max_accu_thres, thres))
-                test_accuracy = best_obj.test(env, best_q, best_discount, best_alpha, best_eps)
+                test_accs = []
+                test_env = env
+                for _ in range(5):
+                    test_model = best_obj
+                    test_q, test_discount, test_alpha, test_eps = best_q, best_discount, best_alpha, best_eps
+                    temp_accuracy = test_model.test(env, test_q, test_discount, test_alpha, test_eps)
+                    test_accs.append(temp_accuracy)
+                
+                test_accuracy = np.mean(test_accs)
+                # test_accuracy = best_obj.test(env, best_q, best_discount, best_alpha, best_eps)
                 accu.append(test_accuracy)
                 env.reset(True, False)
             # print(user[0], accu)
-            print(user[0], ", ".join(f"{x:.2f}" for x in accu))
+            # print(user[0], ", ".join(f"{x:.2f}" for x in accu))
             final_accu = np.add(final_accu, accu)
         final_accu /= len(users_hyper)
         # print(algorithm)

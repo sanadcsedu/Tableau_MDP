@@ -12,6 +12,9 @@ class Categorizing:
             # self.states = {"Damage":0, "Incident":1, "Aircraft":2, "Environment":3}
         elif dataset == 'weather1':
             self.states = {"Temperature":0, "Location":1, "Metadata":2, "CommonPhenomena":3, "Fog":4, "Extreme":5, "Misc":6}
+        else: # 'FAA1'
+            self.states = {"Performance":0, "Airline":1, "Location":2, "Status":3}
+    
     def birdstrikes1(self, category):
         if category in ['"dam_eng1"', '"dam_eng2"', '"dam_windshld"', '"dam_wing_rot"', '"damage"', '"dam_eng3"', '"dam_tail"', '"dam_nose"', '"dam_lghts"', '"dam_lg"', '"dam_fuse"', '"dam_eng4"', '"dam_other"', '"cost_repairs"']:
              return "Damage" #State (Damage of aircraft)
@@ -43,31 +46,28 @@ class Categorizing:
             return "Misc" # miscellaneous 
 
 
-    def faa1(self):
-        self.all_attrs = [('"calculation(percent delta)"', 'carrier'), ('"destcityname"', 'dest'), ('"calculation(arrival y/n)"', 'delay'), ('"longitude (generated)"', 'aggregate'),
-                          ('"deststate"', 'dest'), ('"weatherdelay"', 'delay'), ('"uniquecarrier"', 'carrier'), ('"crsdeptime"', 'time'), ('"deptime"', 'time'), ('"distance"', 'distance'),
-                          ('"depdelay"', 'delay'), ('"arrdelay"', 'delay'), ('"calculation(delayed y/n)"', 'delay'), ('"calculation(total delays)"', 'delay'),
-                          ('"flightdate"', 'time'), ('"calculation(arrdelayed)"', 'delay'), ('"carrierdelay"', 'delay'), ('"calculation([arrdelay]+[depdelay])"', 'delay'),
-                          ('"latitude (generated)"', 'aggregate'), ('"airtime"', 'time'), ('"arrtime"', 'time'), ('"calculation(is delta flight)"', 'carrier'), ('"crselapsedtime"', 'time'), ('"taxiin"', 'taxi'),
-                          ('"crsarrtime"', 'time'), ('"originstate"', 'origin'), ('"taxiout"', 'taxi'), ('"diverted"', 'diverted'), ('"lateaircraftdelay"', 'delay'), ('"calculation(delay?)"', 'delay'),
-                          ('"origincityname"', 'origin'), ('"securitydelay"', 'delay'), ('"cancellationcode"', 'cancellation'), ('"origin"', 'origin'), ('"calculation([dest]+[origin])"', 'dest'),
-                          ('"nasdelay"', 'delay'), ('"calculation(depdelayed)"', 'delay'), ('"number of records"', 'aggregate'), ('"cancelled"', 'cancellation'),
-                          ('"dest"', 'dest'), ('"actualelapsedtime"', 'time')]
+    def faa1(self, category):
+        if category in [ '"arrdelay"', '"depdelay"', '"airtime"', '"securitydelay"']:
+            return "Performance" #Performance of an airline using delay
+        elif category in ['"uniquecarrier"', '"flightdate"']:
+            return "Airline" # Airline and Incident information of uniquely identifying each incident. 
+        elif category in ['"distance"', '"origin"', '"dest"', '"latitude (generated)"', '"longitude (generated)"', '"origincityname"',  '"destcityname"']:
+            return "Location" # Logistic information related to the Source and Destination of a flight
+        elif category in ['"cancelled"', '"diverted"', '"cancellationcode"']:
+            return "Status" # Flight status, whether it was cancelled / diverted
 
-        self.categorized_attrs = defaultdict()
-        test = set()
-        for attrs, category in self.all_attrs:
-            self.categorized_attrs[attrs] = category
-            test.add(category)
-        # pdb.set_trace()
-        # self.show(test)
-        return test
 
     def get_category(self, cur_attrs, dataset):
         ret = set()
         if dataset == 'birdstrikes1':
             for attr in cur_attrs:        
                 ret.add(self.birdstrikes1(attr))
+        elif dataset == 'faa1':
+            for attr in cur_attrs:        
+                ret.add(self.faa1(attr))
+        else: #Dataset is Weather1 
+            for attr in cur_attrs:        
+                ret.add(self.weather1(attr))
         ret = list(ret)
         return ret
 

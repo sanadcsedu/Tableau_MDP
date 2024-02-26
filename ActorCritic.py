@@ -20,7 +20,7 @@ import multiprocessing
 
 #Class definition for the Actor-Critic model
 class ActorCritic(nn.Module):
-    def __init__(self,learning_rate,gamma):
+    def __init__(self,learning_rate,gamma, dataset):
         super(ActorCritic, self).__init__()
         # Class attributes
         self.data = []
@@ -28,10 +28,19 @@ class ActorCritic(nn.Module):
         self.gamma = gamma
 
         # Neural network architecture
-        self.fc1 = nn.Linear(7, 128)
-        self.fc_pi = nn.Linear(128, 7)#actor
-        self.fc_v = nn.Linear(128, 1)#critic
-
+        if dataset == 'birdstrikes1':
+            self.fc1 = nn.Linear(6, 128)
+            self.fc_pi = nn.Linear(128, 3)#actor
+            self.fc_v = nn.Linear(128, 1)#critic
+        elif dataset == 'weather1':
+            self.fc1 = nn.Linear(7, 128)
+            self.fc_pi = nn.Linear(128, 3)#actor
+            self.fc_v = nn.Linear(128, 1)#critic
+        else: #dataset is FAA
+            self.fc1 = nn.Linear(4, 128)
+            self.fc_pi = nn.Linear(128, 3)#actor
+            self.fc_v = nn.Linear(128, 1)#critic
+        
         # Optimizer
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
 
@@ -129,8 +138,8 @@ class Agent():
         self.env = env
         self.learning_rate, self.gamma, self.n_rollout=learning_rate,gamma,num_rollouts
 
-    def train(self):
-        model = ActorCritic(self.learning_rate, self.gamma)
+    def train(self, dataset):
+        model = ActorCritic(self.learning_rate, self.gamma, dataset)
         score = 0.0
         all_predictions = []
         for _ in range(5):
@@ -204,8 +213,6 @@ class run_ac:
         with open(hyperparam_file) as f:
             hyperparams = json.load(f)
 
-        # Create result DataFrame with columns for relevant statistics
-        result_dataframe = pd.DataFrame(columns=['Algorithm', 'User', 'Threshold', 'LearningRate', 'Discount', 'Temperature', 'Accuracy', 'StateAccuracy', 'Reward'])
         # Extract hyperparameters from JSON file
         learning_rates = hyperparams['learning_rates']
         gammas = hyperparams['gammas']
@@ -229,8 +236,10 @@ class run_ac:
                 # Loop over all combinations of hyperparameters
                 for learning_rate in learning_rates:
                     for gamma in gammas:
+                        # env = environment5.environment5()
+                        # env.process_data(dataset, user[0], thres, 'Actor-Critic')
                         agent = Agent(env, learning_rate, gamma)
-                        model, accuracies = agent.train()
+                        model, accuracies = agent.train(dataset)
 
                         # Keep track of best combination of hyperparameters
                         if accuracies > max_accu:
@@ -240,22 +249,26 @@ class run_ac:
                             best_agent = agent
                             best_model = model
 
-                # Print training results
-                # print("#TRAINING: User: {}, Threshold: {:.1f}, Accuracy: {:.2f}, LR: {}, Discount: {}".format(user_name, thres, max_accu, best_learning_rate, best_gamma))
-
                 # Test the best agent and store results in DataFrame
-                test_accuracy = best_agent.test(best_model)
+                # test_accuracy = best_agent.test(best_model)
+                #running them 5 times and taking the average test accuracy to reduce fluctuations
+                test_accs = []
+                for _ in range(5):
+                    test_agent = best_agent
+                    test_model = best_model
+                    temp_accuracy = test_agent.test(test_model)
+                    test_accs.append(temp_accuracy)
+                test_accuracy = np.mean(test_accs)
                 accu.append(test_accuracy)
                 env.reset(True, False)
-                # print("User :{}, Threshold : {:.1f}, Accuracy: {}".format(user_name, thres, test_accuracy))
-
             # print(user[0], accu)
-            print(user[0], ", ".join(f"{x:.2f}" for x in accu))
+            # print(user[0], ", ".join(f"{x:.2f}" for x in accu))
             final_accu = np.add(final_accu, accu)
         final_accu /= len(user_list)
         # print("Actor-Critic: ")
         # print(np.round(final_accu, decimals=2))
         result_queue.put(final_accu)
+
 
     def get_user_name(self, raw_fname):
         user = Path(raw_fname).stem.split('-')[0]
@@ -267,6 +280,7 @@ if __name__ == '__main__':
     datasets = env.datasets
     for d in datasets:
         print("------", d, "-------")
+        env.obj.create_connection(r"Tableau.db")
         user_list = env.obj.get_user_list_for_dataset(d)
 
         obj2 = run_ac()
@@ -295,5 +309,6 @@ if __name__ == '__main__':
         # print(result_queue.get())
         final_result = np.add(final_result, result_queue.get())
         final_result /= 4
-        print("Actor-Critic")
-        print(np.round(final_result, decimals=2))
+        # print("Actor-Critic")
+        # print(np.round(final_result, decimals=2))
+        print("Actor-Critic ", ", ".join(f"{x:.2f}" for x in final_result))

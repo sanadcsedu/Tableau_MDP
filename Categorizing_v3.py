@@ -3,6 +3,7 @@ from read_data import read_data
 import pdb 
 from collections import defaultdict
 from relevant import rewards_v2
+
 class utilities: 
     def __init__(self) -> None:
         self.relevant = None
@@ -74,6 +75,7 @@ class utilities:
         mem_action = []
         mem_rewards = []
         mem_interactions = []
+        for_reward = rewards_v2()
         self.get_prior(dataset)
         history = defaultdict(int)
         for items in interactions[0]:
@@ -107,28 +109,13 @@ class utilities:
                     mem_interactions.append(interactions[i])
                     mem_states.append("Foraging")
                     mem_action.append("Add")
-                    newly_added = []
-                    for items in interactions[i]:
-                        if items not in interactions[i-1]:
-                            newly_added.append(items)
                     #Calculating reward for Foraging state
                     reward = 0
-                    for items in newly_added:
-                        if items in self.relevant: #the newly added item is from relevant
-                            reward += 0.5
-                        elif items in history: # reusing an attribute that has been used in the past, different from reusing all attributes from i-1 interaction
-                            reward += 0.25
-                        else: # adding / exploring a completely new attribute
-                            reward += 1
-                        history[items] = 1
-                    
                     for items in interactions[i]:
                         if items in history:
-                            reward += 0.25 #repeating past interaction 
+                            reward += for_reward.get_reward(dataset, items)
                     mem_rewards.append(reward)
                     # print("---", mem_states[len(mem_states) - 1], mem_action[len(mem_action) - 1], mem_rewards[len(mem_rewards) - 1])
-            
-
             else: 
                 mem_interactions.append(interactions[i])
                 mem_states.append("Sensemaking")
@@ -137,7 +124,7 @@ class utilities:
                 reward = 0
                 for items in interactions[i]:
                     if items in history:
-                        reward += 0.25 #repeating past interaction 
+                        reward += for_reward.get_reward(dataset, items) #repeating past interaction 
                 mem_rewards.append(reward)
             #     print("---", mem_states[len(mem_states) - 1], mem_action[len(mem_action) - 1], mem_rewards[len(mem_rewards) - 1])
             # print(interactions[i])

@@ -125,6 +125,7 @@ if __name__ == "__main__":
     datasets = env.datasets
     for d in datasets:
         print("------", d, "-------")
+        env.obj.create_connection(r"Tableau.db")
         user_list = env.obj.get_user_list_for_dataset(d)
         
         obj2 = misc.misc(len(user_list))
@@ -152,5 +153,6 @@ if __name__ == "__main__":
         # print(result_queue.get())
         final_result = np.add(final_result, result_queue.get())
         final_result /= 4
-        print("Q-Learning")
-        print(np.round(final_result, decimals=2))
+        # print("Q-Learning")
+        # print(np.round(final_result, decimals=2))
+        print("Q-Learning ", ", ".join(f"{x:.2f}" for x in final_result))

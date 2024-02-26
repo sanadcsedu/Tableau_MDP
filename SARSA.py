@@ -140,14 +140,15 @@ if __name__ == "__main__":
     datasets = env.datasets
     for d in datasets:
         print("------", d, "-------")
+        env.obj.create_connection(r"Tableau.db")
         user_list = env.obj.get_user_list_for_dataset(d)
         
         obj2 = misc.misc(len(user_list))
         result_queue = multiprocessing.Queue()
-        p1 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[:4], d, 'SARSA',5, result_queue,))
-        p2 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[4:8], d, 'SARSA',5, result_queue,))
-        p3 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[8:12], d, 'SARSA',5, result_queue,))
-        p4 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[12:], d, 'SARSA',5, result_queue,))
+        p1 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[:4], d, 'SARSA',10, result_queue,))
+        p2 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[4:8], d, 'SARSA',10, result_queue,))
+        p3 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[8:12], d, 'SARSA',10, result_queue,))
+        p4 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[12:], d, 'SARSA',10, result_queue,))
         
         p1.start()
         p2.start()
@@ -167,5 +168,6 @@ if __name__ == "__main__":
         # print(result_queue.get())
         final_result = np.add(final_result, result_queue.get())
         final_result /= 4
-        print("SARSA")
-        print(np.round(final_result, decimals=2))
+        # print("SARSA")
+        # print(np.round(final_result, decimals=2))
+        print("SARSA ", ", ".join(f"{x:.2f}" for x in final_result))

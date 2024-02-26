@@ -15,10 +15,9 @@ class environment5:
     def __init__(self):
         path = os.getcwd()
         self.datasets = ['birdstrikes1', 'weather1', 'faa1']
-        # self.datasets = ['weather1']
         self.tasks = ['t1', 't2', 't3', 't4']
         self.obj = read_data()
-        self.obj.create_connection(r"Tableau.db")
+        # self.obj.create_connection(r"Tableau.db")
         # self.action_space = {'Modify': 0, 'Keep': 1}
         self.action_space = {'Add':0, 'Remove': 1, 'Keep': 2}
         self.steps = 0
@@ -64,21 +63,28 @@ class environment5:
                 # state[cat.states[attrs] + len(high_level_states)] = 1
                 state[cat.states[attrs]] = 1
                 
-        if algo == 'SARSA' or algo == 'Qlearn':
+        if algo == 'SARSA' or algo == 'Qlearn' or algo == 'Greedy' or algo == 'WSLS':
+            # print("here")
             state_str = ''.join(map(str, state))
+            # print(state_str)
+            return state_str
+            # converts the 0/1 in the numpy array into a string and using that string as state rather than numpy. 
+        
             # print (state_str)
         #     state_str = high_level_state
         #     for attr in high_level_attrs:
         #         if attrs != None:
         #             state_str += "+" + str(attr)
-            return state_str
+            
 
         return state
 
     def process_data(self, dataset, user, thres, algo):
 
         #Get interaction sequence from the user interaction log
+        self.obj.create_connection(r"Tableau.db")
         data = self.obj.merge2(dataset, user)
+        # self.obj.close()
         #use the following to generate state, action, reward sequence from raw data
         u = utilities()
         cat = Categorizing(dataset)

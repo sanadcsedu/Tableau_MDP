@@ -1,4 +1,4 @@
-from environment5 import environment5
+# from environment5 import environment5
 from read_data import read_data
 from collections import defaultdict
 import pandas as pd 
@@ -23,7 +23,7 @@ class rewards_v2:
             return 0
         else:
             if attribute in self.faa_relevant:
-                return self.weather_relevant[attribute]
+                return self.faa_relevant[attribute]
             return 0
         
 class rewards_v1:
@@ -47,142 +47,142 @@ class rewards_v1:
             return 0   
 
 
-class nlp:
-    def __init__(self):
-        pass
-    def tf_idf(self, dataset):
-        pass 
-    def get_tf_idf_values(self, df):
-        #term frequency
-        f =  open('output.txt', 'w')
-        f.write(tabulate(df, headers='keys', tablefmt='psql'))
+# class nlp:
+#     def __init__(self):
+#         pass
+#     def tf_idf(self, dataset):
+#         pass 
+#     def get_tf_idf_values(self, df):
+#         #term frequency
+#         f =  open('output.txt', 'w')
+#         f.write(tabulate(df, headers='keys', tablefmt='psql'))
         
-        row, col = df.shape
-        total_word_count = df.sum(axis = 1)
-        df = df.div(total_word_count, axis=0)
-        print(total_word_count)
+#         row, col = df.shape
+#         total_word_count = df.sum(axis = 1)
+#         df = df.div(total_word_count, axis=0)
+#         print(total_word_count)
         
-        f.write(tabulate(df, headers='keys', tablefmt='psql'))
+#         f.write(tabulate(df, headers='keys', tablefmt='psql'))
     
-    def create_idf(self, d):
-        env = environment5()
-        user_list = env.obj.get_user_list_for_dataset(d)
-        obj = read_data()
-        obj.create_connection(r"Tableau.db")
+#     def create_idf(self, d):
+#         env = environment5()
+#         user_list = env.obj.get_user_list_for_dataset(d)
+#         obj = read_data()
+#         obj.create_connection(r"Tableau.db")
 
-        af = defaultdict(int) # af contains document frequency, i.e., number of users using this attribute at least once
-        for user in user_list:
-            data = obj.merge2(d, user[0])
-            attribute_user = defaultdict()
-            for itrs in data:
-                itrs = itrs.strip('[]')
-                states = itrs.split(', ')
-                for s in states:
-                    if len(s) > 0:
-                        attribute_user[s] = 1
-            for items, values in attribute_user.items():
-                af[items] += 1
-        inverse_af = defaultdict(int)
-        N = len(user_list)
-        for items, values in af.items():
-            inverse_af[items] = math.log10(N / values) # log(N/df_t) for each term t
-            if inverse_af[items] >= 1:
-                del inverse_af[items]
+#         af = defaultdict(int) # af contains document frequency, i.e., number of users using this attribute at least once
+#         for user in user_list:
+#             data = obj.merge2(d, user[0])
+#             attribute_user = defaultdict()
+#             for itrs in data:
+#                 itrs = itrs.strip('[]')
+#                 states = itrs.split(', ')
+#                 for s in states:
+#                     if len(s) > 0:
+#                         attribute_user[s] = 1
+#             for items, values in attribute_user.items():
+#                 af[items] += 1
+#         inverse_af = defaultdict(int)
+#         N = len(user_list)
+#         for items, values in af.items():
+#             inverse_af[items] = math.log10(N / values) # log(N/df_t) for each term t
+#             if inverse_af[items] >= 1:
+#                 del inverse_af[items]
 
-        # items_to_remove = [items for items, values in attribute_dict.items() if values < 4]
-        # for items in items_to_remove:
-        #     del attribute_dict[items]
-        # print(attribute_dict)
-        for items, values in inverse_af.items():
-            print(items, values)
-            # print(items, end=",")
+#         # items_to_remove = [items for items, values in attribute_dict.items() if values < 4]
+#         # for items in items_to_remove:
+#         #     del attribute_dict[items]
+#         # print(attribute_dict)
+#         for items, values in inverse_af.items():
+#             print(items, values)
+#             # print(items, end=",")
 
-    def create_df(self, d):
-        env = environment5()
-        user_list = env.obj.get_user_list_for_dataset(d)
+#     def create_df(self, d):
+#         env = environment5()
+#         user_list = env.obj.get_user_list_for_dataset(d)
 
-        #Finding all possible attributes a user can navigate to: [columns]
-        columns = ['users']
-        list_of_all_attrs = set()
-        obj = read_data()
-        obj.create_connection(r"Tableau.db")
-        for user in user_list:
-            data = obj.merge2(d, user[0])
-            for itrs in data:
-                itrs = itrs.strip('[]')
-                states = itrs.split(', ')
-                for s in states:
-                    if len(s) > 0:
-                        list_of_all_attrs.add(s)
-        # all_attributes = list(list_of_all_attrs)
-        for attrs in list_of_all_attrs:
-            columns.append(attrs)
-        print(len(columns))
-        print(columns)
+#         #Finding all possible attributes a user can navigate to: [columns]
+#         columns = ['users']
+#         list_of_all_attrs = set()
+#         obj = read_data()
+#         obj.create_connection(r"Tableau.db")
+#         for user in user_list:
+#             data = obj.merge2(d, user[0])
+#             for itrs in data:
+#                 itrs = itrs.strip('[]')
+#                 states = itrs.split(', ')
+#                 for s in states:
+#                     if len(s) > 0:
+#                         list_of_all_attrs.add(s)
+#         # all_attributes = list(list_of_all_attrs)
+#         for attrs in list_of_all_attrs:
+#             columns.append(attrs)
+#         print(len(columns))
+#         print(columns)
 
-        df = pd.DataFrame(columns=columns)
+#         df = pd.DataFrame(columns=columns)
 
-        for rowidx, user in enumerate(user_list):
-            df.loc[rowidx, 'users'] = user[0]
-            data = obj.merge2(d, user[0])        
-            attribute_freq = defaultdict(int)
-            for itrs in data:
-                itrs = itrs.strip('[]')
-                states = itrs.split(', ')
-                for s in states:
-                    if len(s) > 0:
-                        attribute_freq[s] += 1
-            for items, values in attribute_freq.items():
-                df.loc[rowidx, items] = values
-        df = df.replace(np.nan, 0)
-        # print(df.head())
-        # with open('output.txt', 'w') as f:
-        #    f.write(tabulate(df, headers='keys', tablefmt='psql'))
-        self.get_tf_idf_values(df)
+#         for rowidx, user in enumerate(user_list):
+#             df.loc[rowidx, 'users'] = user[0]
+#             data = obj.merge2(d, user[0])        
+#             attribute_freq = defaultdict(int)
+#             for itrs in data:
+#                 itrs = itrs.strip('[]')
+#                 states = itrs.split(', ')
+#                 for s in states:
+#                     if len(s) > 0:
+#                         attribute_freq[s] += 1
+#             for items, values in attribute_freq.items():
+#                 df.loc[rowidx, items] = values
+#         df = df.replace(np.nan, 0)
+#         # print(df.head())
+#         # with open('output.txt', 'w') as f:
+#         #    f.write(tabulate(df, headers='keys', tablefmt='psql'))
+#         self.get_tf_idf_values(df)
     
-    def frequency(self, d):
-        env = environment5()
-        user_list = env.obj.get_user_list_for_dataset(d)
-        obj = read_data()
-        obj.create_connection(r"Tableau.db")
+#     def frequency(self, d):
+#         env = environment5()
+#         user_list = env.obj.get_user_list_for_dataset(d)
+#         obj = read_data()
+#         obj.create_connection(r"Tableau.db")
 
-        af = defaultdict(int) # af contains document frequency, i.e., number of users using this attribute at least once
-        for user in user_list:
-            data = obj.merge2(d, user[0])
-            attribute_user = defaultdict()
-            for itrs in data:
-                itrs = itrs.strip('[]')
-                states = itrs.split(', ')
-                for s in states:
-                    if len(s) > 0:
-                        attribute_user[s] = 1
-            for items, values in attribute_user.items():
-                af[items] += 1
+#         af = defaultdict(int) # af contains document frequency, i.e., number of users using this attribute at least once
+#         for user in user_list:
+#             data = obj.merge2(d, user[0])
+#             attribute_user = defaultdict()
+#             for itrs in data:
+#                 itrs = itrs.strip('[]')
+#                 states = itrs.split(', ')
+#                 for s in states:
+#                     if len(s) > 0:
+#                         attribute_user[s] = 1
+#             for items, values in attribute_user.items():
+#                 af[items] += 1
         
-        items_to_remove = [items for items, values in af.items() if values < 4]
-        for items in items_to_remove:
-            del af[items]
-        denom = sum(af.values())
-        for items, values in af.items():
-            print(items, values)
-        print("-------")
-        for items, values in af.items():
-            af[items] = round(values/len(user_list), 2)
-            # print("{} {}".format(items, round(values/len(user_list), 2)))
-        # for items, values in af.items():
-        #     if values >= 4:
-        #         print("'", end="")
-        #         print(items, end = "', ")
-        print(af)
+#         items_to_remove = [items for items, values in af.items() if values < 4]
+#         for items in items_to_remove:
+#             del af[items]
+#         denom = sum(af.values())
+#         for items, values in af.items():
+#             print(items, values)
+#         print("-------")
+#         for items, values in af.items():
+#             af[items] = round(values/len(user_list), 2)
+#             # print("{} {}".format(items, round(values/len(user_list), 2)))
+#         # for items, values in af.items():
+#         #     if values >= 4:
+#         #         print("'", end="")
+#         #         print(items, end = "', ")
+#         print(af)
 
-if __name__ == "__main__":    
-    obj = nlp()
-    env = environment5()
-    # env.process_data('birdstrikes1', 81, 0.1, "A")
-    datasets = env.datasets
-    for d in datasets:
-        print("------", d, "-------")
-        obj.frequency(d)
+# if __name__ == "__main__":    
+#     obj = nlp()
+#     env = environment5()
+#     # env.process_data('birdstrikes1', 81, 0.1, "A")
+#     datasets = env.datasets
+#     for d in datasets:
+#         print("------", d, "-------")
+#         obj.frequency(d)
 
 
 # for user in user_list:

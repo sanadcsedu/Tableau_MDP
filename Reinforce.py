@@ -17,12 +17,19 @@ import multiprocessing
 
 eps=1e-35
 class Policy(nn.Module):
-    def __init__(self,learning_rate,gamma,tau):
+    def __init__(self,learning_rate,gamma,tau, dataset):
         super(Policy, self).__init__()
         self.data = []
-
-        self.fc1 = nn.Linear(4, 64)
-        self.fc2 = nn.Linear(64, 4)
+        if dataset == 'birdstrikes1':
+            self.fc1 = nn.Linear(6, 128)
+            self.fc2 = nn.Linear(128, 3)
+        elif dataset == 'faa1':
+            self.fc1 = nn.Linear(4, 128)
+            self.fc2 = nn.Linear(128, 3)
+        else:
+            self.fc1 = nn.Linear(7, 128)
+            self.fc2 = nn.Linear(128, 3)
+    
         self.gamma=gamma
         self.temperature = tau
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
@@ -48,10 +55,10 @@ class Policy(nn.Module):
 
 
 class Reinforce():
-    def __init__(self,env,learning_rate,gamma,tau):
+    def __init__(self,env,learning_rate,gamma,tau, dataset):
         self.env = env
         self.learning_rate, self.gamma, self.temperature = learning_rate, gamma, tau
-        self.pi = Policy(self.learning_rate, self.gamma,self.temperature)
+        self.pi = Policy(self.learning_rate, self.gamma,self.temperature, dataset)
 
     def train(self):
         
@@ -116,11 +123,6 @@ class run_reinforce:
         with open(hyperparam_file) as f:
             hyperparams = json.load(f)
 
-        # Create result DataFrame with columns for relevant statistics
-        result_dataframe = pd.DataFrame(
-            columns=['Algorithm', 'User', 'Threshold', 'LearningRate', 'Discount', 'Temperature', 'Accuracy',
-                    'StateAccuracy', 'Reward'])
-
         # Extract hyperparameters from JSON file
         learning_rates = hyperparams['learning_rates']
         gammas = hyperparams['gammas']
@@ -144,7 +146,7 @@ class run_reinforce:
                 for learning_rate in learning_rates:
                     for gamma in gammas:
                         for temp in temperatures:
-                            agent = Reinforce(env,learning_rate,gamma,temp)
+                            agent = Reinforce(env,learning_rate,gamma,temp, dataset)
                             policy,accuracies = agent.train()
 
                             if accuracies > max_accu:
@@ -154,20 +156,22 @@ class run_reinforce:
                                 best_agent = agent
                                 best_policy = policy
                                 best_temp=temp
-
-                # print("#TRAINING: User :{}, Threshold : {:.1f}, Accuracy: {}, LR: {} ,Discount: {}, Temperature:{}".format(user_name, thres,max_accu,best_learning_rate,best_gamma,best_temp))
-                test_accuracy = best_agent.test(best_policy)
-                # print("User :{}, Threshold : {:.1f}, Accuracy: {}".format(user_name, thres, test_accuracy))
-                # print("#TESTING User :{}, Threshold : {:.1f}, Accuracy: {}, LR: {} ,Discount: {}, Temperature: {}".format(user_name, thres, max_accu,best_learning_rate,best_gamma,best_temp))
+                
+                test_accs = []
+                for _ in range(5):
+                    test_agent = best_agent
+                    test_model = best_policy
+                    temp_accuracy = test_agent.test(test_model)
+                    test_accs.append(temp_accuracy)
+                test_accuracy = np.mean(test_accs)
+                # test_accuracy = best_agent.test(best_policy)
                 accu.append(test_accuracy)
                 env.reset(True, False) 
             # print(user[0], accu)
-            print(user[0], ", ".join(f"{x:.2f}" for x in accu))
+            # print(user[0], ", ".join(f"{x:.2f}" for x in accu))
 
             final_accu = np.add(final_accu, accu)
         final_accu /= len(user_list)
-        # print("Reinforce: ")
-        # print(np.round(final_accu, decimals=2))
         result_queue.put(final_accu)
 
 if __name__ == '__main__':
@@ -175,6 +179,7 @@ if __name__ == '__main__':
     datasets = env.datasets
     for d in datasets:
         print("------", d, "-------")
+        env.obj.create_connection(r"Tableau.db")
         user_list = env.obj.get_user_list_for_dataset(d)
         obj2 = run_reinforce()
 
@@ -202,5 +207,6 @@ if __name__ == '__main__':
         # print(result_queue.get())
         final_result = np.add(final_result, result_queue.get())
         final_result /= 4
-        print("Reinforce")
-        print(np.round(final_result, decimals=2))
+        # print("Reinforce")
+        # print(np.round(final_result, decimals=2))
+        print("Reinforce ", ", ".join(f"{x:.2f}" for x in final_result))
