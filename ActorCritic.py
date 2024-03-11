@@ -30,15 +30,15 @@ class ActorCritic(nn.Module):
         # Neural network architecture
         if dataset == 'birdstrikes1':
             self.fc1 = nn.Linear(6, 128)
-            self.fc_pi = nn.Linear(128, 3)#actor
+            self.fc_pi = nn.Linear(128, 5)#actor
             self.fc_v = nn.Linear(128, 1)#critic
         elif dataset == 'weather1':
             self.fc1 = nn.Linear(7, 128)
-            self.fc_pi = nn.Linear(128, 3)#actor
+            self.fc_pi = nn.Linear(128, 5)#actor
             self.fc_v = nn.Linear(128, 1)#critic
         else: #dataset is FAA
             self.fc1 = nn.Linear(4, 128)
-            self.fc_pi = nn.Linear(128, 3)#actor
+            self.fc_pi = nn.Linear(128, 5)#actor
             self.fc_v = nn.Linear(128, 1)#critic
         
         # Optimizer

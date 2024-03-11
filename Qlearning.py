@@ -58,11 +58,13 @@ class Qlearning:
             Q is the optimal action-value function, a dictionary mapping state -> action values.
             stats is an EpisodeStats object with two numpy arrays for episode_lengths and episode_rewards.
         """
-        Q = defaultdict(lambda: np.zeros(len(env.action_space)))
+        # Q = defaultdict(lambda: np.zeros(len(env.action_space)))
+        Q = defaultdict(lambda: np.zeros(5))
 
         for i_episode in range(num_episodes):
             # The policy we're following
-            policy = self.epsilon_greedy_policy(Q, epsilon, len(env.action_space))
+            # policy = self.epsilon_greedy_policy(Q, epsilon, len(env.action_space))
+            policy = self.epsilon_greedy_policy(Q, epsilon, 5)
 
             # Reset the environment and pick the first state
             state = env.reset(all = False, test = False)
@@ -97,7 +99,8 @@ class Qlearning:
             stats = []
             model_actions = []
             
-            policy = self.epsilon_greedy_policy(Q, epsilon, len(env.action_space))
+            # policy = self.epsilon_greedy_policy(Q, epsilon, len(env.action_space))
+            policy = self.epsilon_greedy_policy(Q, epsilon, 5)
 
             for t in itertools.count():
             

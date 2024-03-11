@@ -32,12 +32,13 @@ class Greedy:
         denom = 0
         for i in range(threshold, length):
             denom += 1
-            try: #Finding the most rewarding action in the current state
-             _max = max(self.reward[env.mem_states[i]], key=self.reward[env.mem_states[i]].get)
-            except ValueError: #Randomly picking an action if it was used previously in current state 
-                _max= random.choice([0, 1, 2])
+            #try:#Finding the most rewarding action in the current state
+             	#_max = max(self.reward[env.mem_states[i]], key=self.reward[env.mem_states[i]].get)
+            _max = 0
+            #except ValueError: #Randomly picking an action if it was used previously in current state 
+             #   _max= random.choice([0, 1, 2, 3, 4])
             
-            if random.choice([0, 1, 2]) == env.mem_action[i]:
+            if _max == env.mem_action[i]:
                  accuracy += 1
 
         accuracy /= denom
@@ -107,4 +108,4 @@ if __name__ == "__main__":
         # print(result_queue.get())
         final_result = np.add(final_result, result_queue.get())
         final_result /= 4
-        print("Greedy ", ", ".join(f"{x:.2f}" for x in final_result))
+        print("Random ", ", ".join(f"{x:.2f}" for x in final_result))

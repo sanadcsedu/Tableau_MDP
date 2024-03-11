@@ -8,7 +8,8 @@ import glob
 import pandas as pd
 from read_data import read_data
 import numpy as np
-from Categorizing_v3 import utilities
+# from Categorizing_v3 import utilities
+from Reward_Generator import reward
 from Categorizing_v4 import Categorizing
 
 class environment5:
@@ -17,9 +18,7 @@ class environment5:
         self.datasets = ['birdstrikes1', 'weather1', 'faa1']
         self.tasks = ['t1', 't2', 't3', 't4']
         self.obj = read_data()
-        # self.obj.create_connection(r"Tableau.db")
-        # self.action_space = {'Modify': 0, 'Keep': 1}
-        self.action_space = {'Add':0, 'Remove': 1, 'Keep': 2}
+        
         self.steps = 0
         self.done = False  # Done exploring the current subtask
         self.mem_states = []
@@ -44,39 +43,19 @@ class environment5:
         return s
 
 
-    def get_state(self, cat, attributes, high_level_state, algo, dataset):
-        # high_level_states = {'Hypothesis_Generation':0, 'Sensemaking':1}
-        # high_level_states = {'Sensemaking':0, 'Foraging':1, 'Navigation':2}
-        # state_len = len(high_level_states) + len(cat.states)
+    def get_state(self, cat, attributes, algo, dataset):
         state_len = len(cat.states)
-        state = np.zeros(state_len, dtype = np.int)
-        # state[high_level_states[high_level_state]] = 1
-        # if high_level_state == 'Sensemaking':
-        #     state[1] = 1
-        # else: #Foraging and Navigation falls into Hypothesis Generation
-        #     state[0] = 1
+        state = np.zeros(state_len, dtype = np.int32)
         
         high_level_attrs = cat.get_category(attributes, dataset)        
         for attrs in high_level_attrs:
-            # print(attrs)
             if attrs != None:
-                # state[cat.states[attrs] + len(high_level_states)] = 1
                 state[cat.states[attrs]] = 1
                 
         if algo == 'SARSA' or algo == 'Qlearn' or algo == 'Greedy' or algo == 'WSLS':
-            # print("here")
             state_str = ''.join(map(str, state))
-            # print(state_str)
             return state_str
-            # converts the 0/1 in the numpy array into a string and using that string as state rather than numpy. 
-        
-            # print (state_str)
-        #     state_str = high_level_state
-        #     for attr in high_level_attrs:
-        #         if attrs != None:
-        #             state_str += "+" + str(attr)
-            
-
+            # converts the 0/1 in the numpy array into a string and using that string as state rather than numpy.             
         return state
 
     def process_data(self, dataset, user, thres, algo):
@@ -86,13 +65,11 @@ class environment5:
         data = self.obj.merge2(dataset, user)
         # self.obj.close()
         #use the following to generate state, action, reward sequence from raw data
-        u = utilities()
+        u = reward()
         cat = Categorizing(dataset)
-        raw_interactions, raw_states, raw_actions, self.mem_reward = u.generate(data, dataset)
-        for i, s in zip(raw_interactions, raw_states):
-            self.mem_states.append(self.get_state(cat, i, s, algo, dataset))
-        for a in raw_actions:
-            self.mem_action.append(self.action_space[a])
+        raw_states, self.mem_action, self.mem_reward = u.generate(data, dataset)
+        for i, s in enumerate(raw_states):
+            self.mem_states.append(self.get_state(cat, s, algo, dataset))
         itrs = len(self.mem_states)        
         self.threshold = int(itrs * thres)   
         # print(dataset, user, thres, len(raw_interactions), len(self.mem_states), len(self.mem_action), len(self.mem_reward))     

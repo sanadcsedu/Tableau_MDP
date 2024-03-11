@@ -22,13 +22,13 @@ class Policy(nn.Module):
         self.data = []
         if dataset == 'birdstrikes1':
             self.fc1 = nn.Linear(6, 128)
-            self.fc2 = nn.Linear(128, 3)
+            self.fc2 = nn.Linear(128, 5)
         elif dataset == 'faa1':
             self.fc1 = nn.Linear(4, 128)
-            self.fc2 = nn.Linear(128, 3)
+            self.fc2 = nn.Linear(128, 5)
         else:
             self.fc1 = nn.Linear(7, 128)
-            self.fc2 = nn.Linear(128, 3)
+            self.fc2 = nn.Linear(128, 5)
     
         self.gamma=gamma
         self.temperature = tau

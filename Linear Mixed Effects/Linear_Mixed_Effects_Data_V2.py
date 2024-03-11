@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import fnmatch
 import pdb
 from collections import defaultdict
@@ -20,7 +22,7 @@ if __name__ == "__main__":
     new_data = []
     for d in datasets:
         obj = read_data_lme()
-        obj.create_connection(r"Tableau.db")
+        obj.create_connection(r"/nfs/hpc/share/sahasa/Tableau_MDP/Tableau.db")
         user_list = obj.get_user_list_for_dataset(d)
         for user in user_list:
             for t in tasks:
@@ -37,63 +39,38 @@ if __name__ == "__main__":
                         mid_idx = idx 
                         break
                 raw_interactions, _, raw_actions, _ = u.generate(interaction_data, d)
-                # print(str(mid_idx) + " - " + str(len(timestamps)) + " - " + str(len(raw_actions)))
-                # if len(raw_actions) <= 8:
-                #     continue
-                # print(str(len(timestamps)) + " - " + str(len(raw_interactions)) + " - " + str(len(raw_actions)))
-                # for idx, actions in enumerate(raw_actions):
-                #     print(raw_interactions[idx], actions, timestamps[idx])
+                
+                if(mid_idx < 4):
+                    continue
                 denominator = 0
-                numerator_add = 0
-                numerator_remove = 0
-                numerator_keep = 0
-                for i in range(mid_idx):
+                numerator = np.zeros(5, dtype=float)
+                for i in range(1, mid_idx):
                     denominator += 1
-                    if raw_actions[i] == 'Add':
-                        numerator_add += 1
-                    elif raw_actions[i] == 'Remove':
-                        numerator_remove += 1
-                    else:
-                        numerator_keep += 1
-                # denominator = (datetime.strptime(timestamps[mid_idx], "%Y-%m-%d %H:%M:%S.%f") - datetime.strptime(timestamps[0], "%Y-%m-%d %H:%M:%S.%f")).total_seconds()
-                # prob_add = round(numerator_add*60 / denominator, 2)
-                # prob_remove = round(numerator_remove*60 / denominator, 2)
-                # prob_keep = round(numerator_keep*60 / denominator, 2)
-
-                # prob_add = round(numerator_add / denominator, 2)
-                # prob_remove = round(numerator_remove / denominator, 2)    
-                # prob_keep = round(numerator_keep / denominator, 2)
-                #First Phase Probabilities
-                # new_data.append([user[0], d, prob_add, prob_remove, prob_keep, t, 'First'])
-                new_data.append([user[0], d, numerator_add, numerator_remove, numerator_keep, t, 'First'])
+                    diff = 0
+                    for items in raw_interactions[i-1]:
+                        if items not in raw_interactions[i]:
+                            diff += 1 
+                    diff = min(diff, 4)
+                    numerator[diff] += 1   
+                numerator /= denominator
+                numerator = np.round(numerator, 2)
+                new_data.append([user[0], d, numerator[0], numerator[1], numerator[2], numerator[3], numerator[4], t, 'First'])
 
                 denominator = 0
-                numerator_add = 0
-                numerator_remove = 0
-                numerator_keep = 0
+                numerator = np.zeros(5, dtype=float)
                 for i in range(mid_idx, len(raw_actions)):
                     denominator += 1
-                    if raw_actions[i] == 'Add':
-                        numerator_add += 1
-                    elif raw_actions[i] == 'Remove':
-                        numerator_remove += 1
-                    else:
-                        numerator_keep += 1
-                
-                # denominator = (datetime.strptime(timestamps[-1], "%Y-%m-%d %H:%M:%S.%f") - datetime.strptime(timestamps[mid_idx], "%Y-%m-%d %H:%M:%S.%f")).total_seconds()
-                # prob_add = round(numerator_add*60 / denominator, 2)
-                # prob_remove = round(numerator_remove*60 / denominator, 2)
-                # prob_remove = round(numerator_remove*60 / denominator, 2)
-
-                # prob_add = round(numerator_add / denominator, 2)
-                # prob_remove = round(numerator_remove / denominator, 2)    
-                # prob_keep = round(numerator_keep / denominator, 2)
-                #Second Phase Probabilities
-                # new_data.append([user[0], d, prob_add, prob_remove, prob_keep, t, 'Second'])
-                new_data.append([user[0], d, numerator_add, numerator_remove, numerator_keep, t, 'Second'])
+                    diff = 0
+                    for items in raw_interactions[i-1]:
+                        if items not in raw_interactions[i]:
+                            diff += 1 
+                    diff = min(diff, 4)
+                    numerator[diff] += 1   
+                numerator /= denominator
+                new_data.append([user[0], d, numerator[0], numerator[1], numerator[2], numerator[3], numerator[4], t, 'Second'])
 
         
-    df = pd.DataFrame(new_data, columns = ['Users', 'Datasets', 'Add', 'Remove', 'Keep', 'Tasks', 'Phase'])
-    # print(df)
-    df.to_csv('lme_data_tableau_rate.csv', index=False)
+    df = pd.DataFrame(new_data, columns = ['Users', 'Datasets', 'Keep', 'Modify1', 'Modify2', 'Modify3', 'Modify4', 'task', 'Phase'])
+    print(df)
+    df.to_csv('lme_data_tableau_new_actions.csv', index=False)
     

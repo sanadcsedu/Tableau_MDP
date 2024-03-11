@@ -67,10 +67,12 @@ class TD_SARSA:
         # A nested dictionary that maps state -> (action -> action-value).
         # Define the valid actions for each state
 
-        Q = defaultdict(lambda: np.zeros(len(env.action_space)))
+        # Q = defaultdict(lambda: np.zeros(len(env.action_space)))
+        Q = defaultdict(lambda: np.zeros(5))
         
         # The policy we're following
-        policy = self.epsilon_greedy_policy(Q, epsilon, len(env.action_space))
+        # policy = self.epsilon_greedy_policy(Q, epsilon, len(env.action_space))
+        policy = self.epsilon_greedy_policy(Q, epsilon, 5)
         
         for i_episode in range(num_episodes):
             state = env.reset(all = False, test = False)
@@ -111,7 +113,8 @@ class TD_SARSA:
 
             stats = []
             
-            policy = self.epsilon_greedy_policy(Q, epsilon, len(env.action_space))
+            # policy = self.epsilon_greedy_policy(Q, epsilon, len(env.action_space))
+            policy = self.epsilon_greedy_policy(Q, epsilon, 5)
 
             for t in itertools.count():
                 action_probs = policy(state)

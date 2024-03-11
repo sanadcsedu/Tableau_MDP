@@ -1,7 +1,9 @@
-import Categorizing
+# import Categorizing
 import sqlite3
 import pdb
 import math
+from Categorizing_v4 import Categorizing
+# from Reward_Generator import reward
 
 class read_data:
 
@@ -39,8 +41,6 @@ class read_data:
         return cur_data
 
     def merge2(self, dataset, user):
-        # obj = read_data()
-        # self.create_connection(r"Tableau.db")
         # merging interactions of all tasks, contains attrubutes used in each interaction 
         interactions = []
         for t in self.tasks:
@@ -56,9 +56,15 @@ if __name__ == '__main__':
     tasks = ['t1', 't2', 't3', 't4']
     for d in datasets:
         users = obj.get_user_list_for_dataset(d)
+        cat = Categorizing(d)
+        # r = reward()
         for u in users:
             user = u[0]
-            interactions = obj.merge2(d, user)
-            print(len(interactions))
-            print(" - ", len(interactions))
+            data = obj.merge2(d, user)
+            # raw_states, raw_actions, mem_reward = r.generate(data, d)
+            # for idx, states in enumerate(raw_states):
+            #     high_level_attrs = cat.get_category(states, d)
+            #     print(high_level_attrs, raw_actions[idx])
+            # print(len(interactions))
+            # print(" - ", len(interactions))
             pdb.set_trace()
