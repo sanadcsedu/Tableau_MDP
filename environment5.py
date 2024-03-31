@@ -17,6 +17,7 @@ class environment5:
         path = os.getcwd()
         self.datasets = ['birdstrikes1', 'weather1', 'faa1']
         self.tasks = ['t1', 't2', 't3', 't4']
+        self.action_space = ['same', 'modify-1', 'modify-2', 'modify-3', 'modify-4']
         self.obj = read_data()
         
         self.steps = 0

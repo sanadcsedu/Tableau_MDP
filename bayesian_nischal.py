@@ -18,29 +18,26 @@ class Greedy:
         threshold = int(length * thres)
         for i in range(threshold):
             self.freq[env.mem_states[i]][env.mem_action[i]] += 1
-            self.reward[env.mem_states[i]][env.mem_action[i]] += env.mem_reward[i]+eps
 
-        # Normalizing
-        for states in self.reward:
-            sum = 0
-            for actions in self.reward[states]:
-                sum += self.reward[states][actions]
-            for actions in self.reward[states]:
-                self.reward[states][actions] = self.reward[states][actions] / sum
         # Checking accuracy on the remaining data:
         accuracy = 0
         denom = 0
         for i in range(threshold, length):
             denom += 1
-            try:    #Finding the most rewarding action in the current state
-                _max = max(self.reward[env.mem_states[i-1]], key=self.reward[env.mem_states[i-1]].get)
-            except ValueError: #Randomly picking an action if it was used previously in current state 
-                _max= random.choice([0, 1, 2, 3, 4])
-               
+            actions = list(self.freq[env.mem_states[i]].keys())
+            frequencies = list(self.freq[env.mem_states[i]].values())
+            try:
+                # Sample uniformly based on the probability of all actions
+                _max = random.choices(actions, weights=frequencies, k=1)[0]
+
+            #if state is not observed in training data then take a random action
+            except IndexError:
+                _max = random.choice([0, 1, 2, 3, 4])
+                
             if _max == env.mem_action[i]:
                  accuracy += 1
 
-            self.reward[env.mem_states[i-1]][_max] += env.mem_reward[i-1]
+            self.freq[env.mem_states[i]][env.mem_action[i]] += 1
 
         accuracy /= denom
         return accuracy
@@ -77,9 +74,8 @@ class run_Greedy:
 if __name__ == "__main__":
     env = environment5.environment5()
     datasets = env.datasets
-    final = np.zeros(9)
     for d in datasets:
-        # print("------", d, "-------")
+        print("------", d, "-------")
         env.obj.create_connection(r"Tableau.db")
         user_list = env.obj.get_user_list_for_dataset(d)
         # env.obj.close()
@@ -110,9 +106,4 @@ if __name__ == "__main__":
         # print(result_queue.get())
         final_result = np.add(final_result, result_queue.get())
         final_result /= 4
-        # print("Greedy ", ", ".join(f"{x:.2f}" for x in final_result))
-        final = np.add(final, final_result)
-
-    final /= 3
-    print("Greedy ", ", ".join(f"{x:.2f}" for x in final))
-    # [0.4, 0.39, 0.393, 0.4, 0.39, 0.407, 0.403, 0.42, 0.433]
+        print("Greedy ", ", ".join(f"{x:.2f}" for x in final_result))

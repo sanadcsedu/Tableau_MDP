@@ -58,13 +58,13 @@ class Qlearning:
             Q is the optimal action-value function, a dictionary mapping state -> action values.
             stats is an EpisodeStats object with two numpy arrays for episode_lengths and episode_rewards.
         """
-        # Q = defaultdict(lambda: np.zeros(len(env.action_space)))
-        Q = defaultdict(lambda: np.zeros(5))
+        Q = defaultdict(lambda: np.zeros(len(env.action_space)))
+        # Q = defaultdict(lambda: np.zeros(5))
 
         for i_episode in range(num_episodes):
             # The policy we're following
-            # policy = self.epsilon_greedy_policy(Q, epsilon, len(env.action_space))
-            policy = self.epsilon_greedy_policy(Q, epsilon, 5)
+            policy = self.epsilon_greedy_policy(Q, epsilon, len(env.action_space))
+            # policy = self.epsilon_greedy_policy(Q, epsilon, 5)
 
             # Reset the environment and pick the first state
             state = env.reset(all = False, test = False)
@@ -81,7 +81,8 @@ class Qlearning:
                 best_next_action = np.argmax(Q[next_state])
                 td_target = reward + discount_factor * Q[next_state][best_next_action]
                 td_delta = td_target - Q[state][action]
-                Q[state][action] += alpha * (td_delta + info)
+                Q[state][action] += alpha * (td_delta)
+
                 state = next_state
                 if done:
                     break
@@ -99,8 +100,8 @@ class Qlearning:
             stats = []
             model_actions = []
             
-            # policy = self.epsilon_greedy_policy(Q, epsilon, len(env.action_space))
-            policy = self.epsilon_greedy_policy(Q, epsilon, 5)
+            policy = self.epsilon_greedy_policy(Q, epsilon, len(env.action_space))
+            # policy = self.epsilon_greedy_policy(Q, epsilon, 5)
 
             for t in itertools.count():
             
@@ -115,7 +116,8 @@ class Qlearning:
                 best_next_action = np.argmax(Q[next_state])
                 td_target = reward + discount_factor * Q[next_state][best_next_action]
                 td_delta = td_target - Q[state][action]
-                Q[state][action] += alpha * (td_delta + prediction)
+                Q[state][action] += alpha * (td_delta)
+                
 
                 state = next_state
                 if done:
@@ -133,10 +135,10 @@ if __name__ == "__main__":
         
         obj2 = misc.misc(len(user_list))
         result_queue = multiprocessing.Queue()
-        p1 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[:4], d, 'Qlearn',5, result_queue,))
-        p2 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[4:8], d, 'Qlearn',5, result_queue,))
-        p3 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[8:12], d, 'Qlearn',5, result_queue,))
-        p4 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[12:], d, 'Qlearn',5, result_queue,))
+        p1 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[:4], d, 'Qlearn',10, result_queue,))
+        p2 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[4:8], d, 'Qlearn',10, result_queue,))
+        p3 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[8:12], d, 'Qlearn',10, result_queue,))
+        p4 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[12:], d, 'Qlearn',10, result_queue,))
         
         p1.start()
         p2.start()
