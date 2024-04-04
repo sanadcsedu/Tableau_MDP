@@ -114,7 +114,7 @@ class environment5:
             prediction = 1
         else:
             prediction = 0
-            # cur_reward = 0
+            cur_reward = 0
 
         self.take_step_action(test)
 
