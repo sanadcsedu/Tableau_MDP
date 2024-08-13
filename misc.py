@@ -30,7 +30,7 @@ class misc:
         self.epsilon_h = hyperparams['epsilon']
         self.threshold_h = hyperparams['threshold']
 
-    def hyper_param(self, users_hyper, dataset, algorithm, epoch, result_queue):
+    def hyper_param(self, users_hyper, dataset, algorithm, epoch, result_queue, info, info_split_accu, info_split_cnt):
         """
             Performs hyperparameter optimization.
 
@@ -44,10 +44,14 @@ class misc:
             None
             """
         best_discount = best_alpha = best_eps = -1
-        # pp = 5
+        output_list = []
         final_accu = np.zeros(9, dtype=float)
+        final_cnt = np.zeros((5, 9), dtype = float)
+        final_split_accu = np.zeros((5, 9), dtype = float)        
         for user in users_hyper:
             accu = []
+            accu_split = [[] for _ in range(5)]
+            cnt_split = [[] for _ in range(5)]
             env = environment5.environment5()
             for thres in self.threshold_h:
                 max_accu_thres = -1
@@ -74,23 +78,50 @@ class misc:
                                 best_q=Q
                                 best_obj=obj
                             max_accu_thres = max(max_accu_thres, train_accuracy)
-                # print("Top Training Accuracy: {}, Threshold: {}".format(max_accu_thres, thres))
+                
                 test_accs = []
-                test_env = env
+                # test_env = env
+                split_accs = [[] for _ in range(5)]
                 for _ in range(5):
                     test_model = best_obj
                     test_q, test_discount, test_alpha, test_eps = best_q, best_discount, best_alpha, best_eps
-                    temp_accuracy = test_model.test(env, test_q, test_discount, test_alpha, test_eps)
+                    temp_accuracy, gp = test_model.test(env, test_q, test_discount, test_alpha, test_eps)
+                    for key, val in gp.items():
+                        split_accs[key].append(val[1])
                     test_accs.append(temp_accuracy)
+                    # env.reset(True, False)
+
                 
                 test_accuracy = np.mean(test_accs)
                 # test_accuracy = best_obj.test(env, best_q, best_discount, best_alpha, best_eps)
                 accu.append(test_accuracy)
                 env.reset(True, False)
-            # print(user[0], accu)
-            # print(user[0], ", ".join(f"{x:.2f}" for x in accu))
+
+                # printing accuracy for each action:
+                # print("Threshold: {}".format(thres))
+                for ii in range(5):
+                    if len(split_accs[ii]) > 0:
+                        # print("action: {}, count: {}, accuracy:{}".format(ii, gp[ii][0], np.mean(split_accs[ii])))
+                        accu_split[ii].append(np.mean(split_accs[ii]))
+                        cnt_split[ii].append(gp[ii][0])
+                    else:
+                        # print("{} Not Present".format(ii))
+                        accu_split[ii].append(0)
+                        cnt_split[ii].append(0)
+            
+            print("# ", user[0], ", ".join(f"{x:.2f}" for x in accu))
+            
             final_accu = np.add(final_accu, accu)
+            for ii in range(5):            
+                final_split_accu[ii] = np.add(final_split_accu[ii], accu_split[ii])
+                final_cnt[ii] = np.add(final_cnt[ii], cnt_split[ii])
+
         final_accu /= len(users_hyper)
-        # print(algorithm)
-        # print(np.round(final_accu, decimals=2))
+        for ii in range(5):            
+            final_split_accu[ii] /= len(users_hyper)
+            final_cnt[ii] /= len(users_hyper)
+        
         result_queue.put(final_accu)
+        info.put(output_list)
+        info_split_accu.put(final_split_accu)
+        info_split_cnt.put(final_cnt)

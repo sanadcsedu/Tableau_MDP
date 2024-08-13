@@ -7,7 +7,7 @@ import torch.optim as optim
 from torch.distributions import Categorical
 # import plotting
 from collections import Counter
-import pandas as pd
+# import pandas as pd
 import json
 import os
 from collections import defaultdict
@@ -154,7 +154,7 @@ class Agent():
                     m = Categorical(prob)
                     a = m.sample().item()
                     actions.append(a)
-                    s_prime, r, done, info = self.env.step(s, a, False)
+                    s_prime, r, done, info, _ = self.env.step(s, a, False)
                     predictions.append(info)
                    
                     model.put_data((s, a, r, s_prime, done))
@@ -182,18 +182,20 @@ class Agent():
             s = self.env.reset(all=False, test=True)
             predictions = []
             score=0
+            insight = defaultdict(list)
+
             while not done:
                 prob = model.pi(torch.from_numpy(s).float())
                 m = Categorical(prob)
                 a = m.sample().item()
-                s_prime, r, done, pred = self.env.step(s, a, True)
+                s_prime, r, done, pred, ground_action = self.env.step(s, a, True)
                 predictions.append(pred)
-
+                
+                insight[ground_action].append(pred)
                 model.put_data((s, a, r, s_prime, done))
 
                 s = s_prime
-                # actions.append(a)
-
+                
                 score += r
 
                 if done:
@@ -201,14 +203,18 @@ class Agent():
                 model.train_net()
 
             test_predictions.append(np.mean(predictions))
-            # print("############ Test Accuracy :{},".format(np.mean(predictions)))
-        return np.mean(test_predictions)
+        
+        granular_prediction = defaultdict()
+        for keys, values in insight.items():
+            granular_prediction[keys] = (len(values), np.mean(values))
+
+        return np.mean(test_predictions), granular_prediction
 
 class run_ac:
     def __init__(self):
         pass
 
-    def run_experiment(self, user_list, dataset, hyperparam_file, result_queue):
+    def run_experiment(self, user_list, dataset, hyperparam_file, result_queue, info, info_split_accu, info_split_cnt):
         # Load hyperparameters from JSON file
         with open(hyperparam_file) as f:
             hyperparams = json.load(f)
@@ -218,11 +224,17 @@ class run_ac:
         gammas = hyperparams['gammas']
 
         final_accu = np.zeros(9, dtype=float)
+        final_cnt = np.zeros((5, 9), dtype = float)
+        final_split_accu = np.zeros((5, 9), dtype = float)
+        
         # Loop over all users
         for user in user_list:
             # Extract user-specific threshold values
             threshold_h = hyperparams['threshold']
             accu = []
+            accu_split = [[] for _ in range(5)]
+            cnt_split = [[] for _ in range(5)]
+
             env = environment5.environment5()
             # Loop over all threshold values
             for thres in threshold_h:
@@ -253,22 +265,46 @@ class run_ac:
                 # test_accuracy = best_agent.test(best_model)
                 #running them 5 times and taking the average test accuracy to reduce fluctuations
                 test_accs = []
+                split_accs = [[] for _ in range(5)]
+                
                 for _ in range(5):
                     test_agent = best_agent
                     test_model = best_model
-                    temp_accuracy = test_agent.test(test_model)
+                    temp_accuracy, gp = test_agent.test(test_model)
                     test_accs.append(temp_accuracy)
+
+                    for key, val in gp.items():
+                        # print(key, val)
+                        split_accs[key].append(val[1])
+                
                 test_accuracy = np.mean(test_accs)
                 accu.append(test_accuracy)
                 env.reset(True, False)
-            # print(user[0], accu)
-            # print(user[0], ", ".join(f"{x:.2f}" for x in accu))
-            final_accu = np.add(final_accu, accu)
-        final_accu /= len(user_list)
-        # print("Actor-Critic: ")
-        # print(np.round(final_accu, decimals=2))
-        result_queue.put(final_accu)
 
+                for ii in range(5):
+                    if len(split_accs[ii]) > 0:
+                        # print("action: {}, count: {}, accuracy:{}".format(ii, gp[ii][0], np.mean(split_accs[ii])))
+                        accu_split[ii].append(np.mean(split_accs[ii]))
+                        cnt_split[ii].append(gp[ii][0])
+                    else:
+                        accu_split[ii].append(0)
+                        cnt_split[ii].append(0)
+
+            print(user[0], ", ".join(f"{x:.2f}" for x in accu))
+
+            final_accu = np.add(final_accu, accu)
+            for ii in range(5):            
+                final_split_accu[ii] = np.add(final_split_accu[ii], accu_split[ii])
+                final_cnt[ii] = np.add(final_cnt[ii], cnt_split[ii])
+
+        final_accu /= len(user_list)
+        for ii in range(5):            
+            final_split_accu[ii] /= len(user_list)
+            final_cnt[ii] /= len(user_list)
+        
+        result_queue.put(final_accu)
+        info_split_accu.put(final_split_accu)
+        info_split_cnt.put(final_cnt)
 
     def get_user_name(self, raw_fname):
         user = Path(raw_fname).stem.split('-')[0]
@@ -286,29 +322,51 @@ if __name__ == '__main__':
         obj2 = run_ac()
 
         result_queue = multiprocessing.Queue()
-        p1 = multiprocessing.Process(target=obj2.run_experiment, args=(user_list[:4], d, 'sampled_hyper_params.json', result_queue,))
-        p2 = multiprocessing.Process(target=obj2.run_experiment, args=(user_list[4:8], d, 'sampled_hyper_params.json', result_queue,))
-        p3 = multiprocessing.Process(target=obj2.run_experiment, args=(user_list[8:12], d, 'sampled_hyper_params.json', result_queue,))
-        p4 = multiprocessing.Process(target=obj2.run_experiment, args=(user_list[12:], d, 'sampled_hyper_params.json', result_queue,))
+        info = multiprocessing.Queue()
+        info_split = multiprocessing.Queue()
+        info_split_cnt = multiprocessing.Queue() 
+    
+        p1 = multiprocessing.Process(target=obj2.run_experiment, args=(user_list[:4], d, 'sampled_hyper_params.json', result_queue, info, info_split, info_split_cnt))
+        p2 = multiprocessing.Process(target=obj2.run_experiment, args=(user_list[4:8], d, 'sampled_hyper_params.json', result_queue, info, info_split, info_split_cnt))
+        p3 = multiprocessing.Process(target=obj2.run_experiment, args=(user_list[8:12], d, 'sampled_hyper_params.json', result_queue, info, info_split, info_split_cnt))
+        p4 = multiprocessing.Process(target=obj2.run_experiment, args=(user_list[12:], d, 'sampled_hyper_params.json', result_queue, info, info_split, info_split_cnt))
         
+        split_final = np.zeros((5, 9), dtype = float)
+        split_final_cnt = np.zeros((5, 9), dtype = float)
+
         p1.start()
         p2.start()
         p3.start()
         p4.start()
         final_result = np.zeros(9, dtype = float)
         p1.join()
-        # temp = result_queue.get()
         final_result = np.add(final_result, result_queue.get())
+        split_final = np.add(split_final, info_split.get())
+        split_final_cnt = np.add(split_final_cnt, info_split_cnt.get())
+        # print(split_final_cnt)
         p2.join()
-        # print(result_queue.get())
         final_result = np.add(final_result, result_queue.get())
+        split_final = np.add(split_final, info_split.get())
+        split_final_cnt = np.add(split_final_cnt, info_split_cnt.get())
+
         p3.join()
-        # print(result_queue.get())
         final_result = np.add(final_result, result_queue.get())
+        split_final = np.add(split_final, info_split.get())
+        split_final_cnt = np.add(split_final_cnt, info_split_cnt.get())
+
         p4.join()
-        # print(result_queue.get())
         final_result = np.add(final_result, result_queue.get())
+        split_final = np.add(split_final, info_split.get())
+        split_final_cnt = np.add(split_final_cnt, info_split_cnt.get())
+
         final_result /= 4
-        # print("Actor-Critic")
-        # print(np.round(final_result, decimals=2))
+        split_final /= 4
+        split_final_cnt /= 4
+
         print("Actor-Critic ", ", ".join(f"{x:.2f}" for x in final_result))
+
+        for ii in range(5):
+            print("Action ", ii, ", ".join(f"{x:.2f}" for x in split_final[ii]))
+
+        for ii in range(5):
+            print("Action ", ii, ", ".join(f"{x:.2f}" for x in split_final_cnt[ii]))

@@ -5,7 +5,6 @@ import fnmatch
 import pdb
 from collections import defaultdict
 import glob
-import pandas as pd
 from read_data import read_data
 import numpy as np
 # from Categorizing_v3 import utilities
@@ -118,4 +117,4 @@ class environment5:
 
         self.take_step_action(test)
 
-        return next_state, cur_reward, self.done, prediction
+        return next_state, cur_reward, self.done, prediction, cur_action
