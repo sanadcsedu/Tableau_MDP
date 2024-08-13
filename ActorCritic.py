@@ -101,7 +101,7 @@ class ActorCritic(nn.Module):
             s, a, r, s_prime, done = transition
             s_lst.append(s)
             a_lst.append([a])
-            r_lst.append([r/100])
+            r_lst.append([r])
             s_prime_lst.append(s_prime)
             done_mask = 0.0 if done else 1.0
             done_lst.append([done_mask])
