@@ -30,14 +30,22 @@ class Qlearning:
             A function that takes the observation as an argument and returns
             the probabilities for each action in the form of a numpy array of length nA.
         """
-
         def policy_fnc(state):
-            A = np.ones(nA, dtype=float) * epsilon / nA
-            best_action = np.argmax(Q[state])
-            A[best_action] += (1.0 - epsilon)
-            return A
+            coin = random.random()
+            if coin < epsilon:
+                    best_action = random.randint(0, 3)
+            else:
+                best_action = np.argmax(Q[state])
+            return best_action
 
         return policy_fnc
+        # def policy_fnc(state):
+        #     A = np.ones(nA, dtype=float) * epsilon / nA
+        #     best_action = np.argmax(Q[state])
+        #     A[best_action] += (1.0 - epsilon)
+        #     return A
+
+        # return policy_fnc
 
 
 
@@ -217,7 +225,7 @@ if __name__ == "__main__":
 # 97 0.50, 0.65, 0.68, 0.62, 0.65, 0.65, 0.54, 0.50, 0.43
 # 61 0.64, 0.47, 0.69, 0.68, 0.65, 0.67, 0.72, 0.71, 0.87
 
-# Q-Learning  0.46, 0.45, 0.47, 0.49, 0.46, 0.51, 0.45, 0.50, 0.50
+# Q-Learning  0.46, 0.45, 0.47, 0.49, 0.46, 0.51, 0.47, 0.50, 0.54
 
 # Accuracy of actions over different thresholds
 # Action  0 0.75, 0.74, 0.73, 0.82, 0.84, 0.77, 0.78, 0.77, 0.63
@@ -288,7 +296,7 @@ if __name__ == "__main__":
 #  81 0.39, 0.51, 0.48, 0.63, 0.43, 0.31, 0.25, 0.23, 0.43
 #  21 0.75, 0.78, 0.83, 0.80, 0.83, 0.89, 0.93, 0.95, 0.91
 
-# Q-Learning  0.44, 0.49, 0.54, 0.54, 0.53, 0.52, 0.50, 0.57, 0.64
+# Q-Learning  0.44, 0.49, 0.54, 0.54, 0.53, 0.52, 0.52, 0.57, 0.64
 
 # Accuracy of actions over different thresholds
 # Action  0 0.62, 0.72, 0.86, 0.84, 0.85, 0.83, 0.76, 0.86, 0.76
