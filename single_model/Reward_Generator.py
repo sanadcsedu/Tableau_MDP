@@ -1,7 +1,7 @@
-from read_data_old import read_data
+from read_data import read_data
 import pdb
 from collections import defaultdict
-# from Categorizing_v4 import Categorizing
+from Categorizing_v4 import Categorizing
 
 class reward:
     def __init__(self) -> None:
@@ -15,7 +15,8 @@ class reward:
         self.rewards['birdstrikes1'] = {'"dam_eng1"': 1.0, '"dam_eng2"': 1.0, '"dam_windshld"': 1.0, '"dam_wing_rot"': 1.0, '"damage"': 0.94, '"ac_class"': 1.0, '"incident_date"': 0.94, '"precip"': 1.0, '"sky"': 1.0, '"atype"': 0.18, '"phase_of_flt"': 0.35, '"operator"': 0.18, '"ac_mass"': 0.24, '"state"': 0.35, '"size"': 0.35, '"birds_struck"': 0.47, '"time_of_day"': 0.47, '"type_eng"': 0.18, '"birds_seen"': 0.24, '"distance"': 0.29, '"height"': 0.24, '"dam_eng3"': 0.35, '"indicated_damage"': 0.18, '"dam_tail"': 0.29, '"dam_nose"': 0.24, '"dam_lghts"': 0.29, '"dam_lg"': 0.24, '"dam_fuse"': 0.24, '"dam_eng4"': 0.29, '"dam_other"': 0.24, '"warned"': 0.24, '"cost_repairs"': 0.24, '"dam_prop"': 0.18, '"dam_rad"': 0.18, '"index_nr"': 0.18, '"speed"': 0.24, '"incident_month"': 0.18, '"airport"': 0.18, '"species"': 0.18, '"faaregion"': 0.24, '"location"': 0.29, '"latitude (generated)"': 0.24, '"longitude (generated)"': 0.24}
         self.rewards['weather1'] = {'"heavyfog"': 1.0, '"date"': 1.0, '"tmax_f"': 0.81, '"tmin_f"': 0.75, '"latitude (generated)"': 0.69, '"longitude (generated)"': 0.69, '"lat"': 0.75, '"lng"': 0.75, '"state"': 0.94, '"freezingrain"': 0.5, '"blowingsnow"': 0.56, '"blowingspray"': 0.56, '"drizzle"': 1.0, '"dust"': 0.5, '"fog"': 0.56, '"mist"': 0.94, '"groundfog"': 0.94, '"elevation"': 0.19, '"freezingdrizzle"': 0.44, '"glaze"': 0.44, '"hail"': 0.5, '"highwinds"': 0.94, '"icefog"': 0.56, '"icepellets"': 0.5, '"prcp"': 0.81, '"rain"': 0.75, '"smoke"': 0.44, '"tmax"': 0.75, '"tmin"': 0.62, '"name"': 0.38, '"snow"': 0.5, '"snowgeneral"': 0.38, '"snwd"': 0.25, '"thunder"': 0.38, '"tornado"': 0.31}
         self.rewards['faa1'] = {'"cancelled"': 1.0, '"diverted"': 1.0, '"arrdelay"': 1.0, '"depdelay"': 0.87, '"flightdate"': 1.0, '"airtime"': 0.27, '"uniquecarrier"': 1.0, '"distance"': 1.0, '"origin"': 0.47, '"dest"': 0.47, '"cancellationcode"': 0.27, '"latitude (generated)"': 0.53, '"longitude (generated)"': 0.53, '"origincityname"': 0.47, '"carrierdelay"': 0.2, '"lateaircraftdelay"': 0.2, '"nasdelay"': 0.2, '"securitydelay"': 0.27, '"weatherdelay"': 0.2, '"destcityname"': 0.27}
-
+        # print(len(self.rewards['birdstrikes1'], len(self.rewards['weather1'], len(self.rewards['faa1']))))
+    
     def generate_reward(self):
         for d in self.datasets:
             users = self.obj.get_user_list_for_dataset(d)
@@ -102,21 +103,21 @@ class reward:
 
         # return mem_states, mem_action, mem_rewards
 
-# if __name__ == '__main__':
-#     obj = read_data()
-#     obj.create_connection(r"Tableau.db")
-#     r = reward()
-#     for d in r.datasets:
-#         users = obj.get_user_list_for_dataset(d)
-#         cat = Categorizing(d)
-#         for user in users:
-#             u = user[0]
-#             data = obj.merge2(d, u)    
-#             raw_states, raw_actions, mem_reward = r.generate(data, d)
-#             for idx, states in enumerate(raw_states):
-#                 high_level_attrs = cat.get_category(states, d)
-#                 print("{};{}".format(high_level_attrs, raw_actions[idx]))
-#             pdb.set_trace()
+if __name__ == '__main__':
+    obj = read_data()
+    obj.create_connection(r"Tableau.db")
+    r = reward()
+    for d in r.datasets:
+        users = obj.get_user_list_for_dataset(d)
+        cat = Categorizing(d)
+        for user in users:
+            u = user[0]
+            data = obj.merge2(d, u)    
+            raw_states, raw_actions, mem_reward = r.generate(data, d)
+            for idx, states in enumerate(raw_states):
+                high_level_attrs = cat.get_category(states, d)
+                print("{};{}".format(high_level_attrs, raw_actions[idx]))
+            pdb.set_trace()
             
             
 # if __name__ == '__main__':

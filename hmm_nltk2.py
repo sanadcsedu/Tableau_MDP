@@ -3,10 +3,9 @@ import ast
 import numpy as np 
 import itertools
 from Reward_Generator import reward
-from read_data import read_data
+from read_data_old import read_data
 import pdb
 import random 
-from Categorizing_v4 import Categorizing
 from itertools import combinations
 import random
 import nltk
@@ -15,20 +14,7 @@ from nltk.tag.hmm import HiddenMarkovModelTrainer
 from nltk.tag import hmm
 from nltk.probability import LidstoneProbDist
 from collections import defaultdict
-
-def get_state(cat, attributes, dataset):
-    state_len = len(cat.states)
-    state = np.zeros(state_len, dtype = np.int32)
-    
-    high_level_attrs = cat.get_category(attributes, dataset)        
-    return '-'.join(map(str, high_level_attrs))
-    # for attrs in high_level_attrs:
-    #     if attrs != None:
-    #         state[cat.states[attrs]] = 1
-            
-    # state_str = ''.join(map(str, state))
-    # return state_str
-
+import environment5 as environment5
 
 obj = read_data()
 obj.create_connection(r"Tableau.db")
@@ -36,49 +22,30 @@ r = reward()
 final_results = np.zeros(9, dtype = float)
 final_cnt = np.zeros((5, 9), dtype = float)
 final_split_accu = np.zeros((5, 9), dtype = float)
-action_space = {'same':0, 'modify-1':1, 'modify-2':2, 'modify-3':3, 'modify-4':4}
+# action_space = {'same':0, 'modify-1':1, 'modify-2':2, 'modify-3':3, 'modify-4':4}
 for d in r.datasets:
     print("------", d, "-------")
     users = obj.get_user_list_for_dataset(d)
     #getting all users data for model initialization
     cleaned_data = []
-    cat = Categorizing(d)
+    # cat = Categorizing(d)
 
     for user in users:
         u = user[0]
         data = obj.merge2(d, u)
         raw_states, raw_actions, mem_reward = r.generate(data, d)
-        sequences = []
-        dd =  defaultdict(int)
-        cnt = 1
-        for i, s in enumerate(raw_states):
-            if len(s) < 3:
-                continue
-            states = get_state(cat, s, d)
-            temp = []
-            for items in states:
-                if items in dd:
-                    temp.append(dd[items])
-                else:
-                    dd[items] = cnt
-                    cnt += 1
-                    temp.append(dd[items])
-            # states = '-'.join(map(str, states))
-            if raw_actions[i] == 0:
-                action = 'same'
-            else:
-                action = f'modify-{raw_actions[i]}'
-
-            sequences.append((str(temp), action))
-            # sequences.append((states, action))
             
-        # pdb.set_trace()
-
         threshold = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
         results = []
         accu_split = [[] for _ in range(5)]
         cnt_split = [[] for _ in range(5)]
             
+        env = environment5.environment5()
+        env.process_data(d, u, 1, 'Greedy')
+        sequences = []
+        for ii in range(len(env.mem_action)):
+            sequences.append((env.mem_states[ii], env.mem_action[ii]))
+        
         for t in threshold:
             split = int(len(sequences) * t)
             predicted_tags = []
@@ -87,13 +54,12 @@ for d in r.datasets:
             split_accs = [[] for _ in range(5)]
             for i in range(split , len(sequences)):
                 try:
-                     trainer = nltk.HiddenMarkovModelTagger.train([sequences[:i]])
-                     state, true_tag = sequences[i]
-                     prediction = trainer.tag([state])
-                     predicted_tag = prediction[0][1]
+                    trainer = nltk.HiddenMarkovModelTagger.train([sequences[:i]])
+                    state, true_tag = sequences[i]
+                    prediction = trainer.tag([state])
+                    predicted_tag = prediction[0][1]
                     
                 except ValueError:
-                    # print('Value Error')
                     continue
 
                 predicted_tags.append(predicted_tag)
@@ -101,9 +67,9 @@ for d in r.datasets:
                 states.append(state)
 
                 if predicted_tag == true_tag:
-                    split_accs[action_space[true_tag]].append(1)
+                    split_accs[true_tag].append(1)
                 else:
-                    split_accs[action_space[true_tag]].append(0)
+                    split_accs[true_tag].append(0)
 
             assert len(states) == len(true_tags) == len(predicted_tags)
             
@@ -119,7 +85,7 @@ for d in r.datasets:
 
             results.append(accuracy)
 
-        print(u, ", ".join(f"{x:.2f}" for x in results))
+        # print(u, ", ".join(f"{x:.2f}" for x in results))
         final_results = np.add(final_results, results)
         for ii in range(4):            
             final_split_accu[ii] = np.add(final_split_accu[ii], accu_split[ii])
@@ -134,8 +100,8 @@ for d in r.datasets:
     for ii in range(5):
         print("Action ", ii, ", ".join(f"{x:.2f}" for x in final_split_accu[ii]))
 
-    for ii in range(5):
-        print("Action ", ii, ", ".join(f"{x:.2f}" for x in final_cnt[ii]))
+    # for ii in range(5):
+    #     print("Action ", ii, ", ".join(f"{x:.2f}" for x in final_cnt[ii]))
 
 # ------ birdstrikes1 -------
 # 1 0.50, 0.44, 0.43, 0.33, 0.20, 0.25, 0.33, 0.25, 0.50

@@ -3,7 +3,7 @@ import ast
 import numpy as np 
 import itertools
 from Reward_Generator import reward
-from read_data import read_data
+from read_data_old import read_data
 import pdb
 import random 
 from Categorizing_v4 import Categorizing

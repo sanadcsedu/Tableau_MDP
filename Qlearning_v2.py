@@ -92,6 +92,12 @@ class Qlearning:
                 td_delta = td_target - Q[state][action]
                 Q[state][action] += alpha * (td_delta)
 
+                #updating based on ground action
+                best_next_action = np.argmax(Q[next_state])
+                td_target = reward + discount_factor * Q[next_state][best_next_action]
+                td_delta = td_target - Q[state][ground_action]
+                Q[state][ground_action] += alpha * (td_delta)
+
                 state = next_state
                 if done:
                     break
@@ -126,6 +132,12 @@ class Qlearning:
                 td_delta = td_target - Q[state][action]
                 Q[state][action] += alpha * (td_delta)
                 
+                #updating based on ground action
+                best_next_action = np.argmax(Q[next_state])
+                td_target = reward + discount_factor * Q[next_state][best_next_action]
+                td_delta = td_target - Q[state][ground_action]
+                Q[state][ground_action] += alpha * (td_delta)
+
                 state = next_state
                 if done:
                     break
@@ -152,10 +164,10 @@ if __name__ == "__main__":
         info_split = multiprocessing.Queue()
         info_split_cnt = multiprocessing.Queue() 
         
-        p1 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[:4], d, 'Qlearn',10, result_queue, info, info_split, info_split_cnt))
-        p2 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[4:8], d, 'Qlearn',10, result_queue, info, info_split, info_split_cnt))
-        p3 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[8:12], d, 'Qlearn',10, result_queue, info, info_split, info_split_cnt))
-        p4 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[12:], d, 'Qlearn',10, result_queue, info, info_split, info_split_cnt))
+        p1 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[:4], d, 'Qlearn_v2', 10, result_queue, info, info_split, info_split_cnt))
+        p2 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[4:8], d, 'Qlearn_v2', 10, result_queue, info, info_split, info_split_cnt))
+        p3 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[8:12], d, 'Qlearn_v2', 10, result_queue, info, info_split, info_split_cnt))
+        p4 = multiprocessing.Process(target=obj2.hyper_param, args=(user_list[12:], d, 'Qlearn_v2', 10, result_queue, info, info_split, info_split_cnt))
         
         split_final = np.zeros((5, 9), dtype = float)
         split_final_cnt = np.zeros((5, 9), dtype = float)

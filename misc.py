@@ -1,10 +1,12 @@
 #contains all the miscellaneous functions for running 
 import pandas as pd
 import SARSA
+import SARSA_v2
 import numpy as np
 # import matplotlib.pyplot as plt 
 import json
 import Qlearning
+import Qlearning_v2
 from collections import Counter
 from pathlib import Path
 import glob
@@ -65,11 +67,16 @@ class misc:
                             if algorithm == 'Qlearn':
                                 obj = Qlearning.Qlearning()
                                 Q, train_accuracy = obj.q_learning(env, epoch, dis, alp, eps)
-                                # print(train_accuracy)
-                            else:
+                            elif algorithm == 'Qlearn_v2':
+                                obj = Qlearning_v2.Qlearning()
+                                Q, train_accuracy = obj.q_learning(env, epoch, dis, alp, eps)
+                            elif algorithm == 'SARSA':
                                 obj = SARSA.TD_SARSA()
                                 Q, train_accuracy = obj.sarsa(env, epoch, dis, alp, eps)
-                                # print(train_accuracy)
+                            else: # algorithm == 'SARSA_v2'
+                                obj = SARSA_v2.TD_SARSA()
+                                Q, train_accuracy = obj.sarsa(env, epoch, dis, alp, eps)
+                                
                             if max_accu_thres < train_accuracy:
                                 max_accu_thres = train_accuracy
                                 best_eps = eps
@@ -109,7 +116,7 @@ class misc:
                         accu_split[ii].append(0)
                         cnt_split[ii].append(0)
             
-            print("# ", user[0], ", ".join(f"{x:.2f}" for x in accu))
+            # print("# ", user[0], ", ".join(f"{x:.2f}" for x in accu))
             
             final_accu = np.add(final_accu, accu)
             for ii in range(5):            

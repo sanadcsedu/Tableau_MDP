@@ -1,4 +1,4 @@
-import environment5
+import environment5_old
 import numpy as np
 from collections import defaultdict
 import random
@@ -91,7 +91,7 @@ class run_wsls:
         result_queue.put(final_accu)
 
 if __name__ == "__main__":
-    env = environment5.environment5()
+    env = environment5_old.environment5()
     datasets = env.datasets
     for d in datasets:
         print("------", d, "-------")

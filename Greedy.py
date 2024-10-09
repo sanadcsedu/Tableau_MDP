@@ -35,7 +35,7 @@ class Greedy:
         for i in range(threshold, length):
             denom += 1
             try:    #Finding the most rewarding action in the current state
-                _max = max(self.reward[env.mem_states[i-1]], key=self.reward[env.mem_states[i-1]].get)
+                _max = max(self.reward[env.mem_states[i]], key=self.reward[env.mem_states[i]].get)
             except ValueError: #Randomly picking an action if it was used previously in current state 
                 _max= random.choice([0, 1, 2, 3, 4])
                
@@ -46,7 +46,7 @@ class Greedy:
             else:
                 insight[env.mem_action[i]].append(0)
 
-            self.reward[env.mem_states[i-1]][_max] += env.mem_reward[i-1]
+            # self.reward[env.mem_states[i]][env.mem_action[i]] += env.mem_reward[i]
 
         accuracy /= denom
         self.reward.clear()
@@ -98,7 +98,7 @@ class run_Greedy:
                         accu_split[ii].append(0)
                         cnt_split[ii].append(0)
 
-            print(u[0], ", ".join(f"{x:.2f}" for x in accu))
+            print(u[0],",", ", ".join(f"{x:.2f}" for x in accu))
             final_accu = np.add(final_accu, accu)
             for ii in range(5):            
                 final_split_accu[ii] = np.add(final_split_accu[ii], accu_split[ii])
@@ -173,8 +173,8 @@ if __name__ == '__main__':
         for ii in range(5):
             print("Action ", ii, ", ".join(f"{x:.2f}" for x in split_final[ii]))
 
-        for ii in range(5):
-            print("Action ", ii, ", ".join(f"{x:.2f}" for x in split_final_cnt[ii]))
+        # for ii in range(5):
+        #     print("Action ", ii, ", ".join(f"{x:.2f}" for x in split_final_cnt[ii]))
 
 #     ------ birdstrikes1 -------
 # 37 0.42, 0.50, 0.51, 0.56, 0.61, 0.63, 0.65, 0.67, 0.62
